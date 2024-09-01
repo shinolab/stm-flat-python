@@ -10,13 +10,13 @@ def stm_single(autd: Controller) -> None:
     m = Static()
 
     edge_length = 40
-    freq = 200
+    freq = 200.0
     width = 5
 
     center = autd.geometry.center + np.array([0.0, 0.0, 150.0])
     stm_iter_list = stm_iter(edge_length, freq, width)
 
-    stm = FociSTM.from_freq(
+    stm = FociSTM(
         freq * Hz,
         (center + np.array([stm_iter_list[i][0], stm_iter_list[i][1], 0]) for i in range(len(stm_iter_list))),
     )
@@ -31,13 +31,13 @@ def stm_multi(autd: Controller) -> None:
     m = Static()
 
     edge_length = 40
-    freq = 200
+    freq = 100.0
     width = 5
 
     center = autd.geometry.center + np.array([0.0, 0.0, 150.0])
     stm_iter_list = stm_iter(edge_length / 2, freq, width)
 
-    stm = FociSTM.from_freq(
+    stm = FociSTM(
         freq * Hz,
         (
             ControlPoints4(
