@@ -2,7 +2,7 @@ from typing import TypeVar
 
 from pyautd3.driver.datagram.modulation import Modulation
 from pyautd3.driver.defined.angle import Angle, rad
-from pyautd3.driver.defined.freq import Freq
+from pyautd3.driver.defined.freq import Freq, Hz
 from pyautd3.driver.firmware.fpga.sampling_config import SamplingConfig
 from pyautd3.driver.utils import _validate_u8
 from pyautd3.modulation.sampling_mode import ISamplingMode, SamplingModeExact, SamplingModeExactFloat, SamplingModeNearest
@@ -18,7 +18,7 @@ class Sine(Modulation["Sine"]):
     _phase: Angle
 
     def __private__init__(self: "Sine", mode: ISamplingMode) -> None:
-        super().__init__(SamplingConfig.Division(5120))
+        super().__init__(SamplingConfig(10))
         self._mode = mode
         self._intensity = 0xFF
         self._offset = 0xFF // 2
@@ -32,10 +32,14 @@ class Sine(Modulation["Sine"]):
                 self.__private__init__(SamplingModeExactFloat(freq))
 
     @classmethod
-    def from_freq_nearest(cls: "type[Sine]", freq: Freq[float]) -> "Sine":
+    def nearest(cls: "type[Sine]", freq: Freq[float]) -> "Sine":
         sine = super().__new__(cls)
         sine.__private__init__(SamplingModeNearest(freq))
         return sine
+
+    @property
+    def freq(self: "Sine") -> Freq[int] | Freq[float]:
+        return self._mode.sine_freq(self._modulation_ptr()) * Hz
 
     def with_intensity(self: "Sine", intensity: int) -> "Sine":
         self._intensity = _validate_u8(intensity)

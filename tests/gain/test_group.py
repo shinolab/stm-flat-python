@@ -6,6 +6,8 @@ import pytest
 
 from pyautd3 import Controller, Device, Segment, Transducer
 from pyautd3.autd_error import AUTDError
+from pyautd3.driver.firmware.fpga.emit_intensity import EmitIntensity
+from pyautd3.driver.firmware.fpga.phase import Phase
 from pyautd3.gain import Group, Null, Uniform
 from tests.test_autd import create_controller
 
@@ -18,11 +20,13 @@ def test_group():
     with create_controller() as autd:
         cx = autd.geometry.center[0]
 
-        autd.send(
+        g = (
             Group(lambda _: lambda tr: "uniform" if tr.position[0] < cx else "null")
-            .set("uniform", Uniform(0x80).with_phase(0x90))
-            .set("null", Null()),
+            .set("uniform", Uniform((EmitIntensity(0x80), Phase(0x90))))
+            .set("null", Null())
         )
+        assert not g.parallel
+        autd.send(g)
         for dev in autd.geometry:
             intensities, phases = autd.link.drives(dev.idx, Segment.S0, 0)
             for tr in dev:
@@ -36,9 +40,33 @@ def test_group():
         autd.send(
             Group(lambda _: lambda tr: "uniform" if tr.position[0] < cx else None).set(
                 "uniform",
-                Uniform(0x80).with_phase(0x90),
+                Uniform((EmitIntensity(0x80), Phase(0x90))),
             ),
         )
+        for dev in autd.geometry:
+            intensities, phases = autd.link.drives(dev.idx, Segment.S0, 0)
+            for tr in dev:
+                if tr.position[0] < cx:
+                    assert np.all(intensities[tr.idx] == 0x80)
+                    assert np.all(phases[tr.idx] == 0x90)
+                else:
+                    assert np.all(intensities[tr.idx] == 0)
+                    assert np.all(phases[tr.idx] == 0)
+
+
+def test_group_with_parallel():
+    autd: Controller[Audit]
+    with create_controller() as autd:
+        cx = autd.geometry.center[0]
+
+        g = (
+            Group(lambda _: lambda tr: "uniform" if tr.position[0] < cx else "null")
+            .with_parallel(True)  # noqa: FBT003
+            .set("uniform", Uniform((EmitIntensity(0x80), Phase(0x90))))
+            .set("null", Null())
+        )
+        assert g.parallel
+        autd.send(g)
         for dev in autd.geometry:
             intensities, phases = autd.link.drives(dev.idx, Segment.S0, 0)
             for tr in dev:
@@ -53,7 +81,7 @@ def test_group():
 def test_group_unknown_key():
     autd: Controller[Audit]
     with create_controller() as autd, pytest.raises(AUTDError, match="Unknown group key"):
-        autd.send(Group(lambda _: lambda _tr: "null").set("uniform", Uniform(0x80).with_phase(0x90)).set("null", Null()))
+        autd.send(Group(lambda _: lambda _tr: "null").set("uniform", Uniform((EmitIntensity(0x80), Phase(0x90)))).set("null", Null()))
 
 
 def test_group_check_only_for_enabled():
@@ -67,7 +95,7 @@ def test_group_check_only_for_enabled():
             check[dev.idx] = True
             return lambda _: 0
 
-        autd.send(Group(f).set(0, Uniform(0x80).with_phase(0x90)))
+        autd.send(Group(f).set(0, Uniform((EmitIntensity(0x80), Phase(0x90)))))
 
         assert not check[0]
         assert check[1]

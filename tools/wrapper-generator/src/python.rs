@@ -268,7 +268,7 @@ impl PythonGenerator {
 import threading
 import ctypes
 import os
-from pyautd3.native_methods.structs import Vector3, Quaternion, FfiFuture, LocalFfiFuture"
+from pyautd3.native_methods.structs import Vector3, Quaternion, FfiFuture, LocalFfiFuture, SamplingConfig"
         )?;
 
         let owns = |ty: &Type| {
@@ -303,13 +303,9 @@ from pyautd3.native_methods.structs import Vector3, Quaternion, FfiFuture, Local
             "ModulationPtr",
             "LinkPtr",
             "ControllerPtr",
-            "SamplingConfigWrap",
-            "STMSamplingConfigWrap",
             "LinkBuilderPtr",
             "CachePtr",
             "ResultI32",
-            "ResultU32",
-            "ResultF32",
             "ResultU64",
             "GroupKVMapPtr",
             "ResultDatagram",
@@ -325,7 +321,7 @@ from pyautd3.native_methods.structs import Vector3, Quaternion, FfiFuture, Local
             "DevicePtr",
             "GainCalcDrivesMapPtr",
             "ResultGainCalcDrivesMap",
-            "ResultSamplingConfigWrap",
+            "ResultSamplingConfig",
             "GroupGainMapPtr",
             "GainSTMMode",
             "Drive",
@@ -337,6 +333,7 @@ from pyautd3.native_methods.structs import Vector3, Quaternion, FfiFuture, Local
             "GainSTMPtr",
             "DebugTypeWrap",
             "TransitionModeWrap",
+            "SilencerTarget",
         ];
         let holo_ty = vec!["ResultBackend", "BackendPtr", "EmissionConstraintWrap"];
         if crate_name != "autd3capi-def"
@@ -432,7 +429,7 @@ class {}(ctypes.Structure):",
         // TODO: Resolve dependencies and define unions and structs in the correct order
         self.unions
             .iter()
-            .filter(|u| u.name != "STMSamplingConfigValue")
+            .filter(|u| u.name != "STMConfigValue")
             .map(|u| {
                 writeln!(
                     w,
@@ -454,7 +451,7 @@ class {}(ctypes.Union):",
 
         self.structs
             .iter()
-            .filter(|u| u.name != "STMSamplingConfigWrap")
+            .filter(|u| u.name != "STMConfigWrap")
             .filter(|e| !e.name.ends_with("Ptr"))
             .map(|p| {
                 writeln!(
@@ -486,7 +483,7 @@ class {}(ctypes.Structure):",
 
         self.unions
             .iter()
-            .filter(|u| u.name == "STMSamplingConfigValue")
+            .filter(|u| u.name == "STMConfigValue")
             .map(|u| {
                 writeln!(
                     w,
@@ -508,7 +505,7 @@ class {}(ctypes.Union):",
 
         self.structs
             .iter()
-            .filter(|u| u.name == "STMSamplingConfigWrap")
+            .filter(|u| u.name == "STMConfigWrap")
             .map(|p| {
                 writeln!(
                     w,

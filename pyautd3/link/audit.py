@@ -6,7 +6,7 @@ import numpy as np
 from pyautd3.driver.link import Link, LinkBuilder
 from pyautd3.native_methods.autd3capi import ControllerPtr, LinkAuditBuilderPtr, RuntimePtr
 from pyautd3.native_methods.autd3capi import NativeMethods as LinkAudit
-from pyautd3.native_methods.autd3capi_driver import LinkBuilderPtr, LinkPtr, LoopBehavior, Segment
+from pyautd3.native_methods.autd3capi_driver import LinkBuilderPtr, LinkPtr, LoopBehavior, Segment, SilencerTarget
 
 __all__ = []  # type: ignore[var-annotated]
 
@@ -80,6 +80,9 @@ class Audit(Link):
     def silencer_fixed_completion_steps_mode(self: "Audit", idx: int) -> bool:
         return bool(LinkAudit().link_audit_fpga_silencer_fixed_completion_steps_mode(self._ptr, idx))
 
+    def silencer_target(self: "Audit", idx: int) -> SilencerTarget:
+        return LinkAudit().link_audit_fpga_silencer_target(self._ptr, idx)
+
     def debug_types(self: "Audit", idx: int) -> np.ndarray:
         buf = np.zeros([4]).astype(ctypes.c_uint8)
         LinkAudit().link_audit_fpga_debug_types(self._ptr, idx, np.ctypeslib.as_ctypes(buf))
@@ -147,16 +150,11 @@ class Audit(Link):
     def current_mod_segment(self: "Audit", idx: int) -> Segment:
         return LinkAudit().link_audit_fpga_current_mod_segment(self._ptr, idx)
 
-    def ultrasound_freq(self: "Audit", idx: int) -> int:
-        return int(LinkAudit().link_audit_fpga_ultrasound_freq(self._ptr, idx))
-
     def pulse_width_encoder_table(self: "Audit", idx: int) -> np.ndarray:
-        p = np.zeros([32768]).astype(ctypes.c_uint8)
-        full_width_start = int(
-            LinkAudit().link_audit_fpga_pulse_width_encoder_table(
-                self._ptr,
-                idx,
-                np.ctypeslib.as_ctypes(p),
-            ),
+        p = np.zeros([256]).astype(ctypes.c_uint8)
+        LinkAudit().link_audit_fpga_pulse_width_encoder_table(
+            self._ptr,
+            idx,
+            np.ctypeslib.as_ctypes(p),
         )
-        return np.array([int(p[i]) if i < full_width_start / 2 else 0x100 | int(p[i]) for i in range(32768)], dtype=int)
+        return p

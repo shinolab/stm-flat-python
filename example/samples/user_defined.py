@@ -14,11 +14,10 @@ class Focus(Gain["Focus"]):
     def __init__(self: "Focus", point: ArrayLike) -> None:
         self.point = np.array(point)
 
-    def calc(self: "Focus", _: Geometry) -> Callable[[Device], Callable[[Transducer], Drive]]:
+    def calc(self: "Focus", _: Geometry) -> Callable[[Device], Callable[[Transducer], Drive | EmitIntensity | Phase | tuple]]:
         return Gain._transform(
             lambda dev: lambda tr: Drive(
-                Phase(float(np.linalg.norm(tr.position - self.point)) * dev.wavenumber * rad),
-                EmitIntensity.maximum(),
+                (Phase(float(np.linalg.norm(tr.position - self.point)) * dev.wavenumber * rad), EmitIntensity.maximum()),
             ),
         )
 
@@ -27,7 +26,7 @@ class Burst(Modulation["Burst"]):
     _length: int
 
     def __init__(self: "Burst", length: int, config: SamplingConfig | Freq[int] | timedelta | None = None) -> None:
-        super().__init__(config if config is not None else SamplingConfig.Freq(4000 * Hz))
+        super().__init__(config if config is not None else 4000 * Hz)
         self._length = length
 
     def calc(self: "Burst") -> np.ndarray:

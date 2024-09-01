@@ -6,9 +6,31 @@ class Drive:
     _phase: Phase
     _intensity: EmitIntensity
 
-    def __init__(self: "Drive", phase: Phase, intensity: EmitIntensity) -> None:
-        self._phase = phase
-        self._intensity = intensity
+    def __init__(self: "Drive", value: "Drive | EmitIntensity | Phase | tuple") -> None:
+        match value:
+            case tuple():
+                if len(value) != 2:  # noqa: PLR2004
+                    raise TypeError
+                match value[0], value[1]:
+                    case EmitIntensity(), Phase():
+                        self._intensity = value[0]
+                        self._phase = value[1]
+                    case Phase(), EmitIntensity():
+                        self._intensity = value[1]
+                        self._phase = value[0]
+                    case _:
+                        raise TypeError
+            case Drive():
+                self._phase = value.phase
+                self._intensity = value.intensity
+            case EmitIntensity():
+                self._phase = Phase(0)
+                self._intensity = value
+            case Phase():
+                self._phase = value
+                self._intensity = EmitIntensity(0xFF)
+            case _:
+                raise TypeError
 
     @property
     def phase(self: "Drive") -> Phase:
@@ -20,4 +42,4 @@ class Drive:
 
     @staticmethod
     def null() -> "Drive":
-        return Drive(Phase(0), EmitIntensity.minimum())
+        return Drive((Phase(0), EmitIntensity.minimum()))

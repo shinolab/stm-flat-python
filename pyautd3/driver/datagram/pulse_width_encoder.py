@@ -32,10 +32,10 @@ class PulseWidthEncoder(
             def f_native(_context: ctypes.c_void_p, geometry_ptr: GeometryPtr, dev_idx: int, idx: int) -> int:
                 if dev_idx not in self._cache:
                     with self._lock:
-                        self._cache[dev_idx] = f(Device(dev_idx, Base().device(geometry_ptr, dev_idx)))
+                        self._cache[dev_idx] = f(Device(dev_idx, geometry_ptr))
                 return self._cache[dev_idx](idx)
 
-            self._f_native = ctypes.CFUNCTYPE(ctypes.c_uint16, ctypes.c_void_p, GeometryPtr, ctypes.c_uint16, ctypes.c_uint16)(f_native)
+            self._f_native = ctypes.CFUNCTYPE(ctypes.c_uint8, ctypes.c_void_p, GeometryPtr, ctypes.c_uint16, ctypes.c_uint8)(f_native)
 
     def _datagram_ptr(self: "PulseWidthEncoder", geometry: Geometry) -> DatagramPtr:
         return (

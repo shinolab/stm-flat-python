@@ -245,9 +245,9 @@ def copy_dll(config: Config):
     if config.is_windows():
         match config.arch:
             case "x64":
-                url = f"https://github.com/shinolab/autd3-capi/releases/download/v{version}/autd3-v{version}-win-x64-dll.zip"
+                url = f"https://github.com/shinolab/autd3-capi/releases/download/v{version}/autd3-v{version}-win-x64-shared.zip"
             case "aarch64":
-                url = f"https://github.com/shinolab/autd3-capi/releases/download/v{version}/autd3-v{version}-win-arm-dll.zip"
+                url = f"https://github.com/shinolab/autd3-capi/releases/download/v{version}/autd3-v{version}-win-aarch64-shared.zip"
             case _:
                 err(f"Unsupported platform: {platform.machine()}")
         urllib.request.urlretrieve(url, "tmp.zip")
@@ -351,10 +351,6 @@ def py_test(args):
             command.append("--cuda")
         subprocess.run(command).check_returncode()
 
-        with set_env("AUTD3_ULTRASOUND_FREQ", "41000"):
-            command = config.python_module(["pytest", "-n", "auto", "-m", "dynamic_freq"])
-            subprocess.run(command).check_returncode()
-
 
 def py_cov(args):
     config = Config(args)
@@ -397,7 +393,14 @@ def util_update_ver(args):
 
     tokens = version.split(".")
     if "-" in tokens[2]:
-        pkg_version = f"{tokens[0]}.{tokens[1]}.{tokens[2].split('-')[0]}{tokens[2].split('-')[1][0]}{tokens[3]}"
+        match tokens[2].split("-")[1]:
+            case "rc":
+                patch_version = tokens[2].split("-")[0] + "rc" + tokens[3]
+            case "alpha":
+                patch_version = tokens[2].split("-")[0] + "a" + tokens[3]
+            case "beta":
+                patch_version = tokens[2].split("-")[0] + "b" + tokens[3]
+        pkg_version = f"{tokens[0]}.{tokens[1]}.{patch_version}"
     else:
         pkg_version = version
 
