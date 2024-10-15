@@ -1,2 +1,2 @@
 numpy
-pyautd3
+pyautd3==27.0.0
